@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IndexedDB with Web Worker Demo</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>IndexedDB with Web Worker Demo</h1>
+        </header>
+        <main>
+            <!-- Form for adding a new item -->
+            <section class="form-section">
+                <h2>Add New Item</h2>
+                <form id="addItemForm">
+                    <div class="form-group">
+                        <label for="clientId">Client ID:</label>
+                        <input type="text" id="clientId" name="clientId" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="type">Change Type:</label>
+                        <select id="type" name="type" required>
+                            <option value="insert">Insert</option>
+                            <option value="delete">Delete</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="position">Position:</label>
+                        <input type="number" id="position" name="position" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="text">Text (only for insert):</label>
+                        <input type="text" id="text" name="text">
+                    </div>
+                    <div class="form-group">
+                        <label for="length">Length (only for delete):</label>
+                        <input type="number" id="length" name="length">
+                    </div>
+                    <button type="submit">Add New Item</button>
+                </form>
+            </section>
+
+            <!-- Fetch Data Section -->
+            <section class="fetch-section">
+                <h2>Fetch Data</h2>
+                <button id="fetchDataButton">Fetch Data</button>
+                <div id="dataDisplay"></div>
+            </section>
+
+            <!-- Get Item by Client ID Section -->
+            <section class="get-item-section">
+                <h2>Get Item by Client ID</h2>
+                <div class="form-group">
+                    <label for="clientIdInput">Client ID:</label>
+                    <input type="text" id="clientIdInput" name="clientIdInput" required>
+                </div>
+                <button id="getItemButton">Get Item</button>
+                <div id="message"></div>
+            </section>
+
+            <!-- Current Document Section -->
+            <section class="current-doc-section">
+                <h2>Current Document</h2>
+                <button id="viewDocButton">View Current Document</button>
+                <div id="docDisplay"></div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Reference to external JS file -->
+    <script src="main.js" defer></script>
+</body>
+</html>
