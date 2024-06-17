@@ -29,14 +29,20 @@ const openDB = () => {
 
 // Add an item to the database
 const addItem = (item) => {
+    console.time("IDB_ADD")
+
     return new Promise((resolve, reject) => {
         console.log('Adding item to IndexedDB:', item);
         const transaction = db.transaction(storeName, 'readwrite');
         const store = transaction.objectStore(storeName);
         const request = store.add(item);
-
+        
         request.onsuccess = () => {
             console.log('Item added successfully.');
+            console.timeEnd("IDB_ADD")
+
+            console.timeEnd("API CALL")
+
             resolve('Item added successfully');
         };
 

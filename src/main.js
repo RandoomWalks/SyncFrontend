@@ -7,13 +7,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const message = document.getElementById('message');
     const viewDocButton = document.getElementById('viewDocButton');
     const docDisplay = document.getElementById('docDisplay');
+    const resetDocumentButton = document.getElementById('resetDocumentButton');
+    const applyOperationButton = document.getElementById('applyOperationButton');
+    const getDocumentButton = document.getElementById('getDocumentButton');
 
     // Initialize Web Worker
     const worker = new Worker('worker.js');
     console.log('Web Worker initialized.');
+    const SERVER_BASE_URL = 'http://localhost:3000/';
 
     // Handle adding a new item
     addItemForm.addEventListener('submit', (e) => {
+
         e.preventDefault();
         const clientId = document.getElementById('clientId').value;
         const type = document.getElementById('type').value;
@@ -34,10 +39,32 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         console.log('Submitting new change:', changeDto);
-        worker.postMessage({
-            action: 'addItem',
-            data: changeDto
-        });
+
+        console.time("API CALL")
+
+        // Send the changeDto to the server
+        fetch(SERVER_BASE_URL + 'sync/client-changes', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify([changeDto]),
+        })
+            .then(response => {
+                if (response.ok) {
+                    console.log('Client change submitted successfully');
+                    // Update the IndexedDB
+                    worker.postMessage({ action: 'addItem', data: changeDto });
+                } else {
+                    console.error('Error submitting client change:', response.statusText);
+                }
+            console.timeEnd("API CALL")
+
+            })
+            .catch(error => {
+                console.error('Error submitting client change:', error);
+            });
+
     });
 
     // Handle fetching all data
@@ -90,4 +117,96 @@ document.addEventListener('DOMContentLoaded', () => {
     worker.onerror = (error) => {
         console.error('Error in worker:', error);
     };
+
+    // Function to fetch server changes
+    function fetchServerChanges(since) {
+        fetch(SERVER_BASE_URL +`sync/server-changes?since=${encodeURIComponent(since.toISOString())}`)
+            .then(response => response.json())
+            .then(serverChanges => {
+                console.log('Server changes received:', serverChanges);
+                // Process the server changes (e.g., update the IndexedDB)
+                serverChanges.forEach(change => {
+                    worker.postMessage({ action: 'addItem', data: change });
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching server changes:', error);
+            });
+    }
+
+    // Call fetchServerChanges periodically or when needed
+    // setInterval(() => {
+    //     const lastFetchTime = new Date(); // Replace with the actual last fetch time
+    //     fetchServerChanges(lastFetchTime);
+    // }, 5000); // Fetch server changes every 5 seconds (adjust as needed)
+
+    // Handle resetting the document
+    resetDocumentButton.addEventListener('click', () => {
+        const initialDocument = prompt('Enter the initial document:');
+        if (initialDocument !== null) {
+            fetch(SERVER_BASE_URL +'sync/reset-document', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ initialDocument }),
+            })
+                .then(response => {
+                    if (response.ok) {
+                        console.log('Document reset successfully');
+                        // You may need to update the IndexedDB and the UI here
+                    } else {
+                        console.error('Error resetting document:', response.statusText);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error resetting document:', error);
+                });
+        }
+    });
+
+    // Handle applying an operation
+    applyOperationButton.addEventListener('click', () => {
+        const operation = {
+            type: 'insert', // or 'delete'
+            position: 5,
+            text: ' World', // for inserts
+            vectorClock: { client1: 1 },
+            clientId: 'your-client-id',
+        };
+
+        fetch(SERVER_BASE_URL +'sync/apply-operation', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ operation }),
+        })
+            .then(response => {
+                if (response.ok) {
+                    console.log('Operation applied successfully');
+                    // You may need to update the IndexedDB and the UI here
+                } else {
+                    console.error('Error applying operation:', response.statusText);
+                }
+            })
+            .catch(error => {
+                console.error('Error applying operation:', error);
+            });
+    });
+
+    // Handle getting the current document
+    getDocumentButton.addEventListener('click', () => {
+        fetch(SERVER_BASE_URL +'sync/document')
+            .then(response => response.json())
+            .then(data => {
+                console.log('Current document:', data.document);
+                // Update the UI with the current document
+                const docDisplay = document.getElementById('docDisplay');
+                docDisplay.innerHTML = data.document;
+            })
+            .catch(error => {
+                console.error('Error retrieving document:', error);
+            });
+    });
 });
