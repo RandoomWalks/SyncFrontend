@@ -1,4 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM is fully loaded');
+
     const addItemForm = document.getElementById('addItemForm');
     const fetchDataButton = document.getElementById('fetchDataButton');
     const dataDisplay = document.getElementById('dataDisplay');
@@ -18,7 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Handle adding a new item
     addItemForm.addEventListener('submit', (e) => {
-
+        console.log('addEventListener submit CALLED');
         e.preventDefault();
         const clientId = document.getElementById('clientId').value;
         const type = document.getElementById('type').value;
@@ -64,6 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
             .catch(error => {
                 console.error('Error submitting client change:', error);
             });
+
 
     });
 
