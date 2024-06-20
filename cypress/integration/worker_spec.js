@@ -1,4 +1,3 @@
-/// <reference types="cypress" />
 
 describe('Worker.js CRDT/CRUD Operations', () => {
     const workerPath = 'src/worker.js';
@@ -16,10 +15,13 @@ describe('Worker.js CRDT/CRUD Operations', () => {
     });
 
     afterEach(() => {
-        worker.terminate();
+        if (worker) {
+
+            worker.terminate();
+        }
     });
 
-    it('should add an item to IndexedDB', async () => {
+    it.only('should add an item to IndexedDB', async () => {
         const changeDto = {
             id: Date.now(),
             type: 'insert',
@@ -30,19 +32,58 @@ describe('Worker.js CRDT/CRUD Operations', () => {
             timestamp: new Date().toISOString(),
         };
 
-        worker.postMessage({ action: 'addItem', data: changeDto });
 
-        return new Promise((res, rej) => {
-          worker.addEventListener("message", (event) => {
-            if (event.data.action === 'message') {
-              console.log("LOGG");
-              expect(event.data.data).to.equal('Item added successfully');
-              // // done();
-              console.log("Res", res); 
-              res("YAY");
-            }
-          });
-        });
+        (new Promise((res, rej) => {
+            const timeout = setTimeout(() => {
+                rej(new Error('Worker TO'));
+            }, 5000);
+
+            worker.addEventListener("message", (event) => {
+                clearTimeout(timeout);
+
+                if (event.data.action === 'message') {
+                    console.log("LOGG");
+                    expect(event.data.data).to.equal('Item added successfully');
+                    // // done();
+                    console.log("Res", res);
+                    res("YAY");
+                } else {
+                    rej(new Error('Unexpected worker response'));
+                }
+            });
+            worker.postMessage({ action: 'addItem', data: changeDto });
+            console.log("Res3");
+
+        })).then((result) => {
+            console.log("Res2");
+
+            expect(result).to.equal('Item added successfully');
+        }).catch((err) => {
+            console.log("Res4", err);
+
+        })
+        console.log("Res5");
+
+        // return new Promise((res, rej) => {
+        //     const timeout = setTimeout(()=> {
+        //         rej(new Error('Worker TO'));
+        //     }, 5000);
+
+        //     worker.addEventListener("message", (event) => {
+        //         clearTimeout(timeout);
+
+        //         if (event.data.action === 'message') {
+        //             console.log("LOGG");
+        //             expect(event.data.data).to.equal('Item added successfully');
+        //             // // done();
+        //             console.log("Res", res);
+        //             res("YAY");
+        //         } else {
+        //             rej(new Error ('Unexpected worker response'));
+        //         }
+        //     });
+        //     worker.postMessage({ action: 'addItem', data: changeDto });
+        // });
 
         // return new Cypress.Promise((res, rej) => {
         //   console.log("Res", res); 
@@ -70,7 +111,7 @@ describe('Worker.js CRDT/CRUD Operations', () => {
         //     //     }
         //     // };
         // })
-        
+
 
         //   worker.onmessage = (event) => {
         //     if (event.data.action === 'message') {
