@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "main": "main.js",
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "cy:run:worker": "cypress run --spec 'cypress/integration/worker_spec.js'"
+
   },
   "keywords": [],
   "author": "",

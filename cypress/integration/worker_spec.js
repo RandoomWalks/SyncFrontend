@@ -1,27 +1,88 @@
 
 describe('Worker.js CRDT/CRUD Operations', () => {
-    const workerPath = 'src/worker.js';
+    const workerPath = '/worker.js';
 
-    // it.only("should", ()=> {
-    //     done();
+    // Custom command to interact with a web worker
+    Cypress.Commands.add('workerCommand', (message) => {
+        return cy.window().then((win) => {
+            return new Cypress.Promise((resolve) => {
+                // Create a new worker
+                const worker = new win.Worker(workerPath);
 
-    // //   console.log("done? ", done);
-    // })
+                // Set up message handler
+                worker.onmessage = (event) => {
+                    resolve(event.data);
+                    worker.terminate(); // Clean up after receiving the message
+                };
+
+                // Send message to worker
+                worker.postMessage(message);
+            });
+        });
+    });
+
 
     let worker;
     //   
-    beforeEach(() => {
-        worker = new Worker(workerPath);
+    // beforeEach(() => {
+    //     worker = new Worker(workerPath);
+    // });
+
+    // afterEach(() => {
+    //     if (worker) {
+
+    //         worker.terminate();
+    //     }
+    // });
+
+    it.only('should add an item to IndexedDB (normal promise / cypress.window())', () => {
+        const changeDto = {
+            id: Date.now(),
+            type: 'insert',
+            position: 0,
+            vectorClock: {},
+            clientId: 'worker-test-client',
+            text: 'Hello, Worker!',
+            timestamp: new Date().toISOString(),
+        };
+
+        // Use cy.window() to access the browser's global scope
+        cy.window().then((win) => {
+            const worker = new win.Worker('/worker.js');
+
+            // Create a promise that resolves when the worker sends a message
+            const workerPromise = new Promise((resolve) => {
+                worker.onmessage = (event) => {
+                    console.log("event.data:",event.data);
+                    console.log("event.data.data:",event.data.data);
+    
+                    resolve(event.data); };
+            });
+
+            // Post message to worker
+            worker.postMessage({ action: 'addItem', data: changeDto });
+
+            // Wait for the worker's response and assert
+            cy.wrap(workerPromise).should((response) => {
+                expect(response.action).to.equal('message');
+                expect(response.data).to.equal('Item added successfully');
+            });
+
+            // Clean up the worker
+            cy.wrap(null).then(() => worker.terminate());
+        });
     });
 
-    afterEach(() => {
-        if (worker) {
 
-            worker.terminate();
-        }
+    it('should process data in the worker (Use cypress.promise()/Cypress.Window)', () => {
+        cy.workerCommand({ action: 'process', data: [1, 2, 3] })
+            .then((result) => {
+                expect(result).to.deep.equal([2, 4, 6]);
+            });
     });
 
-    it.only('should add an item to IndexedDB', async () => {
+
+    it('should add an item to IndexedDB', async () => {
         const changeDto = {
             id: Date.now(),
             type: 'insert',
@@ -129,6 +190,9 @@ describe('Worker.js CRDT/CRUD Operations', () => {
 
         worker.onmessage = (event) => {
             if (event.data.action === 'displayData') {
+                cy.log(event.data.data)
+                console.log("event.data.data:",event.data.data);
+
                 expect(event.data.data).to.be.an('array');
                 done();
             }
