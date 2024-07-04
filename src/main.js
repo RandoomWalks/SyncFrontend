@@ -12,6 +12,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const resetDocumentButton = document.getElementById('resetDocumentButton');
     const applyOperationButton = document.getElementById('applyOperationButton');
     const getDocumentButton = document.getElementById('getDocumentButton');
+    const fetchServerChangesButton = document.getElementById('fetchServerChangesButton');
+    let lastFetchTime = new Date(0); // Initialize to epoch time
+
 
     // Initialize Web Worker
     const worker = new Worker('worker.js');
@@ -61,7 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     console.error('Error submitting client change:', response.statusText);
                 }
-            console.timeEnd("API CALL")
+                console.timeEnd("API CALL")
 
             })
             .catch(error => {
@@ -122,16 +125,46 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error('Error in worker:', error);
     };
 
+    fetchServerChangesButton.addEventListener('click', () => {
+        fetchServerChanges(lastFetchTime);
+    });
+
     // Function to fetch server changes
+    // function fetchServerChanges(since) {
+    //     fetch(SERVER_BASE_URL + `sync/server-changes?since=${encodeURIComponent(since.toISOString())}`)
+    //         .then(response => response.json())  // Step 1: Fetch data from the server and parse response as JSON
+    //         .then(serverChanges => {  // Step 2: Process the JSON data received from the server
+    //             console.log('Server changes received:', serverChanges);
+    //             // Process the server changes (e.g., update the IndexedDB)
+    //             serverChanges.forEach(change => {
+    //                 worker.postMessage({ action: 'addItem', data: change });
+    //             });
+    //         })
+    //         .catch(error => {  // Step 3: Handle errors if the fetch or JSON parsing fails
+    //             console.error('Error fetching server changes:', error);
+    //         });
+    // }
+    
     function fetchServerChanges(since) {
-        fetch(SERVER_BASE_URL +`sync/server-changes?since=${encodeURIComponent(since.toISOString())}`)
+        fetch(SERVER_BASE_URL + `sync/server-changes?since=${encodeURIComponent(since.toISOString())}`)
             .then(response => response.json())
             .then(serverChanges => {
                 console.log('Server changes received:', serverChanges);
-                // Process the server changes (e.g., update the IndexedDB)
-                serverChanges.forEach(change => {
-                    worker.postMessage({ action: 'addItem', data: change });
-                });
+                if (serverChanges.length > 0) {
+                    // Update lastFetchTime to the latest change's timestamp
+                    lastFetchTime = new Date(Math.max(...serverChanges.map(change => new Date(change.timestamp))));
+                    console.log("New Fetch time set:",lastFetchTime);
+                    
+                    // Process the server changes
+                    serverChanges.forEach(change => {
+                        worker.postMessage({ action: 'addItem', data: change });
+                    });
+
+                    // Refresh the document view
+                    worker.postMessage({ action: 'viewDoc' });
+                } else {
+                    console.log('No new changes from server');
+                }
             })
             .catch(error => {
                 console.error('Error fetching server changes:', error);
@@ -148,7 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
     resetDocumentButton.addEventListener('click', () => {
         const initialDocument = prompt('Enter the initial document:');
         if (initialDocument !== null) {
-            fetch(SERVER_BASE_URL +'sync/reset-document', {
+            fetch(SERVER_BASE_URL + 'sync/reset-document', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -179,7 +212,7 @@ document.addEventListener('DOMContentLoaded', () => {
             clientId: 'your-client-id',
         };
 
-        fetch(SERVER_BASE_URL +'sync/apply-operation', {
+        fetch(SERVER_BASE_URL + 'sync/apply-operation', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -201,7 +234,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Handle getting the current document
     getDocumentButton.addEventListener('click', () => {
-        fetch(SERVER_BASE_URL +'sync/document')
+        fetch(SERVER_BASE_URL + 'sync/document')
             .then(response => response.json())
             .then(data => {
                 console.log('Current document:', data.document);
@@ -213,4 +246,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error('Error retrieving document:', error);
             });
     });
+
+
+    // Fetch server changes every 30 seconds
+    setInterval(() => {
+        fetchServerChanges(lastFetchTime);
+    }, 30000);
+
 });
