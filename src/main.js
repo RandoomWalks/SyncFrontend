@@ -16,7 +16,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize Web Worker
     const worker = new Worker('worker.js');
     console.log('Web Worker initialized.');
-    const SERVER_BASE_URL = 'http://localhost:3000/';
+    const LOCAL_SERVER_BASE_URL = 'http://localhost:3000/';
+    const SERVER_BASE_URL = 'https://nestjs-service-app-eed252ab2ac6.herokuapp.com/';
 
     // Handle adding a new item
     addItemForm.addEventListener('submit', (e) => {
