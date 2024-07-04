@@ -1,5 +1,15 @@
+import { initializeSocket, sendChangesToServer } from './socketManager.js';
+import { getServerChanges, sendClientChanges } from './api.js';
+import * as viewUtils from './view.js';
+
+let worker;
+let lastSyncTime = new Date(0); // Initialize to epoch
+
+
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM is fully loaded');
+
+    initializeSocket();
 
     const addItemForm = document.getElementById('addItemForm');
     const fetchDataButton = document.getElementById('fetchDataButton');

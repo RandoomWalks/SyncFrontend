@@ -1,4 +1,4 @@
-const viewUtils = {
+export const viewUtils = {
     displayData: (data) => {
         const dataDisplay = document.getElementById('dataDisplay');
         dataDisplay.innerHTML = JSON.stringify(data, null, 2);
