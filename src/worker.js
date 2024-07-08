@@ -50,7 +50,7 @@ const addItem = (item) => {
             console.error('Error adding item:', event.target.error);
             reject('Error adding item');
         };
-    });
+    }); 
 };
 
 // Fetch all data from the database
@@ -113,6 +113,10 @@ const viewDoc = () => {
 
         request.onsuccess = (event) => {
             const changes = event.target.result;
+
+            // Sort changes by updatedAt
+            changes.sort((a, b) => new Date(a.updatedAt) - new Date(b.updatedAt));
+
             let document = '';
             changes.forEach(change => {
                 if (change.type === 'insert') {

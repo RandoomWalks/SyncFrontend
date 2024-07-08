@@ -14,6 +14,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const getDocumentButton = document.getElementById('getDocumentButton');
     const fetchServerChangesButton = document.getElementById('fetchServerChangesButton');
     let lastFetchTime = new Date(0); // Initialize to epoch time
+    // let lastFetchTime = new Date(0).toISOString(); // Initialize to epoch time
+
 
 
     // Initialize Web Worker
@@ -34,14 +36,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Create a change DTO object
         const changeDto = {
-            id: Date.now(), // Unique ID based on timestamp
+            // The id field in changeDto is now a string, which is more consistent with how MongoDB ObjectIds are typically handled on the client side.
+            id: Date.now().toString(), // Unique ID based on updatedAt, use string for consistency as backend
             type,
             position: parseInt(position, 10),
             vectorClock: {}, // Vector clock will be updated by the server
             clientId,
             text: type === 'insert' ? text : undefined,
             length: type === 'delete' ? parseInt(length, 10) : undefined,
-            timestamp: new Date().toISOString() // Add a timestamp
+            updatedAt: new Date().toISOString() // Add a updatedAt
+            // Dates are consistently stored and transmitted as ISO 8601 strings.
         };
 
         console.log('Submitting new change:', changeDto);
@@ -146,17 +150,20 @@ document.addEventListener('DOMContentLoaded', () => {
     // }
     
     function fetchServerChanges(since) {
+        console.log("START fetchServerChanges() , since.toISOString(): ",since.toISOString())
         fetch(SERVER_BASE_URL + `sync/server-changes?since=${encodeURIComponent(since.toISOString())}`)
-            .then(response => response.json())
+        .then(response => response.json())
             .then(serverChanges => {
                 console.log('Server changes received:', serverChanges);
                 if (serverChanges.length > 0) {
-                    // Update lastFetchTime to the latest change's timestamp
-                    lastFetchTime = new Date(Math.max(...serverChanges.map(change => new Date(change.timestamp))));
-                    console.log("New Fetch time set:",lastFetchTime);
+                    // Update lastFetchTime to the latest change's updatedAt
+                    lastFetchTime = new Date(Math.max(...serverChanges.map(change => new Date(change.updatedAt))));
+                    console.log("fetchServerChanges(), New Fetch time set:", lastFetchTime.toISOString()); // Log as ISO string
+                    // console("START fetchServerChanges() , since.toISOString(): ",since.toISOString())
                     
                     // Process the server changes
                     serverChanges.forEach(change => {
+                        change.updatedAt = new Date(change.updatedAt).toISOString();
                         worker.postMessage({ action: 'addItem', data: change });
                     });
 
