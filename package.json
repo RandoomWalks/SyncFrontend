@@ -13,6 +13,7 @@
     "@babel/core": "^7.24.7",
     "@babel/preset-env": "^7.24.7",
     "babel-jest": "^29.7.0",
+    "copy-webpack-plugin": "^12.0.2",
     "core-js": "^3.37.1",
     "cypress": "^13.12.0",
     "fake-indexeddb": "^6.0.0",
@@ -20,6 +21,11 @@
     "jest-environment-jsdom": "^29.7.0",
     "jest-fetch-mock": "^3.0.3",
     "jsdom": "^24.1.0",
-    "util": "^0.12.5"
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.5.3",
+    "util": "^0.12.5",
+    "webpack": "^5.92.1",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^5.0.4"
   }
 }
