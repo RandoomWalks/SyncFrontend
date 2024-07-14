@@ -13,7 +13,7 @@ module.exports = defineConfig({
         },
       });
     },
-    baseUrl: 'http://localhost:8000', // Change this to the URL where your app is running
+    baseUrl: 'http://localhost:8080', // Change this to the URL where your app is running
     specPattern: 'cypress/integration/**/*.js',
     supportFile: 'cypress/support/e2e.js',
   },

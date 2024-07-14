@@ -1,4 +1,4 @@
-import { Change } from './types';
+import { Change, VectorClock } from './types';
 
 const dbName = 'DemoDB';
 const storeName = 'Items';
@@ -28,34 +28,33 @@ const openDB = (): Promise<IDBDatabase> => {
     });
 };
 
+
 const addItem = (item: Change): Promise<string> => {
     console.time("IDB_ADD");
-
-    // Ensure item has an 'id' property
-    if (!item.id) {
-        item.id = new Date().getTime(); // Or use any other method to generate a unique id
-    }
 
     return new Promise((resolve, reject) => {
         console.log('Adding item to IndexedDB:', item);
         const transaction = db.transaction(storeName, 'readwrite');
         const store = transaction.objectStore(storeName);
-        const request = store.add(item);
+        
+        // Use a composite key of clientId and updatedAt for the id
+        const id = `${item.clientId}-${item.updatedAt}`;
+        const itemToAdd = { ...item, id };
+
+        const request = store.put(itemToAdd); // Use put instead of add to update if exists
 
         request.onsuccess = () => {
-            console.log('Item added successfully.');
+            console.log('Item added/updated successfully. Vector clock:', item.vectorClock);
             console.timeEnd("IDB_ADD");
-            console.timeEnd("API CALL");
-            resolve('Item added successfully');
+            resolve('Item added/updated successfully');
         };
 
         request.onerror = (event: Event) => {
-            console.error('Error adding item:', (event.target as IDBRequest).error);
-            reject('Error adding item');
+            console.error('Error adding/updating item:', (event.target as IDBRequest).error);
+            reject('Error adding/updating item');
         };
     });
 };
-
 
 // const addItem = (item: any): Promise<string> => {
 //     console.time("IDB_ADD");
@@ -138,20 +137,27 @@ const viewDoc = (): Promise<string> => {
         request.onsuccess = (event: Event) => {
             const changes = (event.target as IDBRequest).result;
 
-            changes.sort((a: any, b: any) => new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime());
+            // Sort changes based on vector clocks
+            changes.sort((a: Change, b: Change) => {
+                const aTime = new Date(a.updatedAt).getTime();
+                const bTime = new Date(b.updatedAt).getTime();
+                if (aTime !== bTime) return aTime - bTime;
+                return a.clientId.localeCompare(b.clientId);
+            });
 
             let document = '';
-            changes.forEach((change: any) => {
+            changes.forEach((change: Change) => {
                 if (change.type === 'insert') {
                     document = document.slice(0, change.position) + change.text + document.slice(change.position);
                 } else if (change.type === 'delete') {
-                    document = document.slice(0, change.position) + document.slice(change.position + change.length);
+                    document = document.slice(0, change.position) + document.slice(change.position + (change.length || 0));
                 }
             });
             console.log('Current document constructed:', document);
             resolve(document);
         };
 
+        
         request.onerror = (event: Event) => {
             console.error('Error fetching document:', (event.target as IDBRequest).error);
             reject('Error fetching document');

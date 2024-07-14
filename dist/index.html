@@ -1,93 +1,61 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>IndexedDB with Web Worker Demo</title>
-  <link rel="stylesheet" href="styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collaborative Editing Demo</title>
+    <style>
+        /* Add some basic styling */
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .section { margin-bottom: 20px; border: 1px solid #ddd; padding: 10px; }
+        #editor { width: 100%; height: 200px; }
+        #clientId { font-weight: bold; }
+    </style>
 </head>
+
 <body>
-  <div class="container">
-    <header>
-      <h1>IndexedDB with Web Worker Demo</h1>
-    </header>
-    <main>
-      <!-- Form for adding a new item -->
-      <section class="form-section">
-        <h2>Add New Item</h2>
-        <form id="addItemForm">
-          <div class="form-group">
-            <label for="type">Change Type:</label>
-            <select id="type" name="type" required>
-              <option value="insert">Insert</option>
-              <option value="delete">Delete</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="position">Position:</label>
-            <input type="number" id="position" name="position" required />
-          </div>
-          <div class="form-group">
-            <label for="text">Text (only for insert):</label>
-            <input type="text" id="text" name="text" />
-          </div>
-          <div class="form-group">
-            <label for="length">Length (only for delete):</label>
-            <input type="number" id="length" name="length" />
-          </div>
-          <button type="submit">Add New Item</button>
-        </form>
-      </section>
+    <div class="container">
+        <h1>Collaborative Editing Demo</h1>
+        <p>Your Client ID: <span id="clientId"></span></p>
 
-      <!-- Fetch Data Section -->
-      <section class="fetch-section">
-        <h2>Fetch Data</h2>
-        <button id="fetchDataButton">Fetch Data</button>
-        <div id="dataDisplay"></div>
-      </section>
-
-      <!-- Get Item by Client ID Section -->
-      <section class="get-item-section">
-        <h2>Get Item by Client ID</h2>
-        <div class="form-group">
-          <label for="clientIdInput">Client ID:</label>
-          <input type="text" id="clientIdInput" name="clientIdInput" required />
+        <div class="section">
+            <h2>Document Editor</h2>
+            <textarea id="editor"></textarea>
         </div>
-        <button id="getItemButton">Get Item</button>
-        <div id="message"></div>
-      </section>
 
-      <!-- Current Document Section -->
-      <section class="current-doc-section">
-        <h2>Current Document</h2>
-        <button id="viewDocButton">View Current Document</button>
-        <div id="docDisplay"></div>
-      </section>
-      <!-- New sections -->
-      <section class="reset-doc-section">
-        <h2>Reset Document</h2>
-        <button id="resetDocumentButton">Reset Document</button>
-      </section>
+        <div class="section">
+            <h2>Manual Operations</h2>
+            <form id="operationForm">
+                <select id="operationType">
+                    <option value="insert">Insert</option>
+                    <option value="delete">Delete</option>
+                </select>
+                <input type="number" id="position" placeholder="Position" required>
+                <input type="text" id="text" placeholder="Text (for insert)">
+                <input type="number" id="length" placeholder="Length (for delete)">
+                <button type="submit">Apply Operation</button>
+            </form>
+        </div>
 
-      <section class="apply-operation-section">
-        <h2>Apply Operation</h2>
-        <button id="applyOperationButton">Apply Operation</button>
-      </section>
+        <div class="section">
+            <h2>Sync Controls</h2>
+            <button id="syncButton">Sync with Server</button>
+            <button id="fetchChangesButton">Fetch Server Changes</button>
+        </div>
 
-      <section class="get-document-section">
-        <h2>Get Document</h2>
-        <button id="getDocumentButton">Get Document</button>
-      </section>
+        <div class="section">
+            <h2>Document State</h2>
+            <button id="viewDocButton">View Current Document</button>
+            <pre id="docDisplay"></pre>
+        </div>
 
-      <section class="fetch-server-changes-section">
-        <h2>Fetch Server Changes</h2>
-        <button id="fetchServerChangesButton">Fetch Server Changes</button>
-      </section>
-    </main>
-  </div>
+        <div class="section">
+            <h2>Debug Information</h2>
+            <button id="showDebugInfo">Show Debug Info</button>
+            <pre id="debugInfo" style="display: none;"></pre>
+        </div>
+    </div>
 
-  <!-- Reference to external JS files -->
-  <script type="module" src="main.js" defer></script>
-  <script src="view.js" defer></script>
+    <script src="main.js" type="module"></script>
 </body>
 </html>
