@@ -17,6 +17,7 @@
     <div class="container">
         <h1>Collaborative Editing Demo</h1>
         <p>Your Client ID: <span id="clientId"></span></p>
+        <p>Your Client Vector Clock: <span id="clientVC"></span></p>
 
         <div class="section">
             <h2>Document Editor</h2>
@@ -55,6 +56,10 @@
             <pre id="debugInfo" style="display: none;"></pre>
         </div>
     </div>
+
+    <button id="clearDbButton">Clear Database</button>
+    <button id="resetDocumentButton">Reset Document</button>
+    <input id="initialContentInput" type="text" placeholder="Initial content">
 
     <script src="main.js" type="module"></script>
 </body>
